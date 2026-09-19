@@ -19,6 +19,11 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Open3D runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1
+
       - name: Get open-source reconstruction pipeline
         run: git clone --depth 1 https://github.com/JacobGroover/Single-Image-to-3D.git pipeline
 
