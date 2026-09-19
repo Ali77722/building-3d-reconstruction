@@ -1,0 +1,51 @@
+name: Building 3D reconstruction
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reconstruct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Cache Hugging Face model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-depth-anything-small-v1
+      - name: Get open-source reconstruction pipeline
+        run: git clone --depth 1 https://github.com/JacobGroover/Single-Image-to-3D.git pipeline
+      - name: Install dependencies
+        run: python -m pip install -r pipeline/requirements.txt
+      - name: Reconstruct
+        working-directory: pipeline
+        run: >
+          python -m single_image_to_3d ../input/building.jpg
+          --out ../output
+          --model depth-anything-small
+          --device cpu
+          --max-size 768
+          --near 0.5
+          --far 10
+          --background-quantile 0.97
+          --edge-threshold 0.06
+          --poisson-depth 7
+          --target-triangles 80000
+          --mesh-format ply
+          --views front angled side
+      - name: Upload 3D model and previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: central-building-3d
+          path: output/
+          if-no-files-found: error
